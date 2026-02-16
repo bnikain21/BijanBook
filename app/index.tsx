@@ -1,7 +1,14 @@
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { getMonthOverviewData, Category, MonthlyBudget } from "../db/queries";
+import {
+  getMonthOverviewData,
+  hasMonthlyBudgets,
+  getMostRecentMonthWithBudgets,
+  copyBudgetsFromMonth,
+  Category,
+  MonthlyBudget,
+} from "../db/queries";
 import { getSignedAmount } from "../utils/signedAmount";
 import { useMonth } from "../utils/MonthContext";
 
@@ -24,6 +31,13 @@ export default function OverviewScreen() {
   const [txCount, setTxCount] = useState(0);
 
   const loadOverview = useCallback(async () => {
+    // Auto-copy budgets from previous month if this month has none
+    const hasBudgets = await hasMonthlyBudgets(month);
+    if (!hasBudgets) {
+      const prevMonth = await getMostRecentMonthWithBudgets(month);
+      if (prevMonth) await copyBudgetsFromMonth(prevMonth, month);
+    }
+
     const { transactions, categories, budgets } = await getMonthOverviewData(month);
     const catMap: Record<number, Category> = {};
     for (const c of categories) catMap[c.id] = c;

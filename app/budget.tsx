@@ -13,6 +13,9 @@ import {
   getTransactionsByMonth,
   getMonthlyBudgets,
   setMonthlyBudget,
+  hasMonthlyBudgets,
+  getMostRecentMonthWithBudgets,
+  copyBudgetsFromMonth,
   Category,
 } from "../db/queries";
 import { getSignedAmount } from "../utils/signedAmount";
@@ -35,6 +38,13 @@ export default function BudgetScreen() {
   const [totalSpent, setTotalSpent] = useState(0);
 
   const loadData = useCallback(async () => {
+    // Auto-copy budgets from previous month if this month has none
+    const hasBudgets = await hasMonthlyBudgets(month);
+    if (!hasBudgets) {
+      const prevMonth = await getMostRecentMonthWithBudgets(month);
+      if (prevMonth) await copyBudgetsFromMonth(prevMonth, month);
+    }
+
     const [categories, transactions, budgets] = await Promise.all([
       getAllCategories(),
       getTransactionsByMonth(month),

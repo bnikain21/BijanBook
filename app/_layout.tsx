@@ -3,6 +3,21 @@ import { Tabs, useRouter } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { initDatabase } from "../db/database";
 import { MonthProvider, useMonth } from "../utils/MonthContext";
+import { FilterProvider } from "../utils/FilterContext";
+
+function BackButton({ to }: { to: string }) {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.navigate(to)}
+      style={{ marginLeft: 16, padding: 4 }}
+    >
+      <Text style={{ fontSize: 16, color: "#2563eb", fontWeight: "600" }}>
+        {"< Back"}
+      </Text>
+    </Pressable>
+  );
+}
 
 function TabsWithMonth() {
   const router = useRouter();
@@ -42,11 +57,27 @@ function TabsWithMonth() {
       />
       <Tabs.Screen
         name="edit"
-        options={{ title: "Edit Transaction", href: null }}
+        options={{
+          title: "Edit Transaction",
+          href: null,
+          headerLeft: () => <BackButton to="/transactions" />,
+        }}
       />
       <Tabs.Screen
         name="settings"
-        options={{ title: "Settings", href: null }}
+        options={{
+          title: "Settings",
+          href: null,
+          headerLeft: () => <BackButton to="/" />,
+        }}
+      />
+      <Tabs.Screen
+        name="filters"
+        options={{
+          title: "Filters",
+          href: null,
+          headerLeft: () => <BackButton to="/transactions" />,
+        }}
       />
     </Tabs>
   );
@@ -69,7 +100,9 @@ export default function RootLayout() {
 
   return (
     <MonthProvider>
-      <TabsWithMonth />
+      <FilterProvider>
+        <TabsWithMonth />
+      </FilterProvider>
     </MonthProvider>
   );
 }

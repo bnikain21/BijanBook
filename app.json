@@ -4,7 +4,7 @@
     "slug": "budge-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/piggy_bank.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,13 +13,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bijan.budgetracker"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/piggy_bank.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.bijan.budgetracker",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },

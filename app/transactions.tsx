@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   getTransactionsByMonth,
@@ -9,14 +9,14 @@ import {
   Category,
 } from "../db/queries";
 import { useMonth } from "../utils/MonthContext";
+import { useFilters } from "../utils/FilterContext";
 
 export default function TransactionsScreen() {
   const router = useRouter();
   const { month } = useMonth();
+  const { selectedCategory, selectedAccount } = useFilters();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<Record<number, Category>>({});
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     const [txs, cats] = await Promise.all([
@@ -35,16 +35,6 @@ export default function TransactionsScreen() {
     }, [loadData])
   );
 
-  const categoryList = useMemo(
-    () => Object.values(categoryMap).sort((a, b) => a.name.localeCompare(b.name)),
-    [categoryMap]
-  );
-
-  const accountList = useMemo(() => {
-    const set = new Set(transactions.map((tx) => tx.account));
-    return Array.from(set).sort();
-  }, [transactions]);
-
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       if (selectedCategory !== null && tx.categoryId !== selectedCategory) return false;
@@ -52,6 +42,9 @@ export default function TransactionsScreen() {
       return true;
     });
   }, [transactions, selectedCategory, selectedAccount]);
+
+  const activeFilterCount =
+    (selectedCategory !== null ? 1 : 0) + (selectedAccount !== null ? 1 : 0);
 
   function handleDelete(tx: Transaction) {
     Alert.alert(
@@ -118,68 +111,24 @@ export default function TransactionsScreen() {
           </Text>
         </View>
       ) : (
-        <>
-          {/* Category filter chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-          >
+        <FlatList
+          data={filteredTransactions}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          ListHeaderComponent={
             <Pressable
-              style={[styles.filterChip, selectedCategory === null && styles.filterChipSelected]}
-              onPress={() => setSelectedCategory(null)}
+              style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+              onPress={() => router.push("/filters")}
             >
-              <Text style={[styles.filterChipText, selectedCategory === null && styles.filterChipTextSelected]}>
-                All Categories
+              <Text
+                style={[styles.filterBtnText, activeFilterCount > 0 && styles.filterBtnTextActive]}
+              >
+                Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
               </Text>
             </Pressable>
-            {categoryList.map((cat) => (
-              <Pressable
-                key={cat.id}
-                style={[styles.filterChip, selectedCategory === cat.id && styles.filterChipSelected]}
-                onPress={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-              >
-                <Text style={[styles.filterChipText, selectedCategory === cat.id && styles.filterChipTextSelected]}>
-                  {cat.name}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-
-          {/* Account filter chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-          >
-            <Pressable
-              style={[styles.filterChip, selectedAccount === null && styles.filterChipSelected]}
-              onPress={() => setSelectedAccount(null)}
-            >
-              <Text style={[styles.filterChipText, selectedAccount === null && styles.filterChipTextSelected]}>
-                All Accounts
-              </Text>
-            </Pressable>
-            {accountList.map((acct) => (
-              <Pressable
-                key={acct}
-                style={[styles.filterChip, selectedAccount === acct && styles.filterChipSelected]}
-                onPress={() => setSelectedAccount(selectedAccount === acct ? null : acct)}
-              >
-                <Text style={[styles.filterChipText, selectedAccount === acct && styles.filterChipTextSelected]}>
-                  {acct}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-
-          <FlatList
-            data={filteredTransactions}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={renderItem}
-            contentContainerStyle={styles.list}
-          />
-        </>
+          }
+        />
       )}
     </View>
   );
@@ -236,25 +185,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#fee2e2",
   },
   deleteBtnText: { color: "#dc2626", fontSize: 13, fontWeight: "600" },
-  filterRow: {
+  filterBtn: {
+    alignSelf: "flex-start",
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#d1d5db",
     backgroundColor: "#f9fafb",
+    marginBottom: 12,
   },
-  filterChipSelected: {
+  filterBtnActive: {
     backgroundColor: "#2563eb",
     borderColor: "#2563eb",
   },
-  filterChipText: { fontSize: 13, color: "#374151" },
-  filterChipTextSelected: { color: "#fff" },
+  filterBtnText: { fontSize: 14, fontWeight: "600", color: "#374151" },
+  filterBtnTextActive: { color: "#fff" },
   empty: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { fontSize: 18, color: "#6b7280", fontWeight: "500" },
   emptySubtext: { fontSize: 14, color: "#9ca3af", marginTop: 4 },
