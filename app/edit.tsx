@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import {
   getAllCategories,
   getTransactionById,
@@ -21,12 +22,25 @@ import {
 } from "../db/queries";
 import { AutocompleteInput } from "../components/AutocompleteInput";
 
+function formatDate(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function parseDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export default function EditScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [description, setDescription] = useState("");
   const [account, setAccount] = useState("");
   const [isIncome, setIsIncome] = useState(false);
@@ -43,7 +57,7 @@ export default function EditScreen() {
       ]);
       setCategories(cats);
       if (tx) {
-        setDate(tx.date);
+        setDate(parseDate(tx.date));
         setDescription(tx.description);
         setAccount(tx.account);
         setIsIncome(tx.isIncome === 1);
@@ -61,8 +75,12 @@ export default function EditScreen() {
     setIsIncome(cat.rule === "income");
   }
 
+  function onDateChange(_event: DateTimePickerEvent, selected?: Date) {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (selected) setDate(selected);
+  }
+
   function validate(): string | null {
-    if (!date.trim()) return "Date is required";
     if (!description.trim()) return "Description is required";
     if (!account.trim()) return "Account is required";
     const num = parseFloat(amount);
@@ -79,7 +97,7 @@ export default function EditScreen() {
     }
 
     await updateTransaction(Number(id), {
-      date: date.trim(),
+      date: formatDate(date),
       description: description.trim(),
       account: account.trim(),
       isIncome: isIncome ? 1 : 0,
@@ -111,12 +129,17 @@ export default function EditScreen() {
           keyboardDismissMode="on-drag"
         >
           <Text style={styles.label}>Date</Text>
-          <TextInput
-            style={styles.input}
-            value={date}
-            onChangeText={setDate}
-            placeholder="YYYY-MM-DD"
-          />
+          <Pressable style={styles.input} onPress={() => setShowDatePicker(!showDatePicker)}>
+            <Text style={styles.dateText}>{formatDate(date)}</Text>
+          </Pressable>
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === "ios" ? "inline" : "default"}
+              onChange={onDateChange}
+            />
+          )}
 
           <Text style={styles.label}>Description</Text>
           <TextInput
@@ -217,6 +240,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9fafb",
   },
+  dateText: { fontSize: 16, color: "#111827" },
   notesInput: { minHeight: 60, textAlignVertical: "top" },
   toggleRow: { flexDirection: "row", gap: 8 },
   toggleChip: {

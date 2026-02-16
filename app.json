@@ -29,7 +29,8 @@
     "scheme": "budge-tracker",
     "plugins": [
       "expo-sqlite",
-      "expo-router"
+      "expo-router",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

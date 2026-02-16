@@ -13,11 +13,11 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { getAllCategories, insertTransaction, Category } from "../db/queries";
 import { AutocompleteInput } from "../components/AutocompleteInput";
 
-function todayString(): string {
-  const d = new Date();
+function formatDate(d: Date): string {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -27,7 +27,8 @@ function todayString(): string {
 export default function AddScreen() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [date, setDate] = useState(todayString());
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [description, setDescription] = useState("");
   const [account, setAccount] = useState("");
   const [isIncome, setIsIncome] = useState(false);
@@ -47,8 +48,12 @@ export default function AddScreen() {
     setIsIncome(cat.rule === "income");
   }
 
+  function onDateChange(_event: DateTimePickerEvent, selected?: Date) {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (selected) setDate(selected);
+  }
+
   function validate(): string | null {
-    if (!date.trim()) return "Date is required";
     if (!description.trim()) return "Description is required";
     if (!account.trim()) return "Account is required";
     const num = parseFloat(amount);
@@ -65,7 +70,7 @@ export default function AddScreen() {
     }
 
     await insertTransaction({
-      date: date.trim(),
+      date: formatDate(date),
       description: description.trim(),
       account: account.trim(),
       isIncome: isIncome ? 1 : 0,
@@ -74,7 +79,7 @@ export default function AddScreen() {
       notes: notes.trim(),
     });
 
-    setDate(todayString());
+    setDate(new Date());
     setDescription("");
     setAccount("");
     setIsIncome(false);
@@ -97,12 +102,17 @@ export default function AddScreen() {
           keyboardDismissMode="on-drag"
         >
           <Text style={styles.label}>Date</Text>
-          <TextInput
-            style={styles.input}
-            value={date}
-            onChangeText={setDate}
-            placeholder="YYYY-MM-DD"
-          />
+          <Pressable style={styles.input} onPress={() => setShowDatePicker(!showDatePicker)}>
+            <Text style={styles.dateText}>{formatDate(date)}</Text>
+          </Pressable>
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === "ios" ? "inline" : "default"}
+              onChange={onDateChange}
+            />
+          )}
 
           <Text style={styles.label}>Description</Text>
           <TextInput
@@ -201,6 +211,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#f9fafb",
   },
+  dateText: { fontSize: 16, color: "#111827" },
   notesInput: { minHeight: 60, textAlignVertical: "top" },
   toggleRow: { flexDirection: "row", gap: 8 },
   toggleChip: {

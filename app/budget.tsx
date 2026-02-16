@@ -69,10 +69,10 @@ export default function BudgetScreen() {
     let tBudget = 0;
     let tSpent = 0;
     for (const r of budgetRows) {
-      if (r.budgetAmount !== null && r.budgetAmount > 0) {
+      if (r.rule === "spending" && r.budgetAmount !== null && r.budgetAmount > 0) {
         tBudget += r.budgetAmount;
       }
-      tSpent += r.actual;
+      if (r.rule === "spending" && r.actual > 0) tSpent += r.actual;
     }
 
     setRows(budgetRows);

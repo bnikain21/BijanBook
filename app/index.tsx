@@ -32,20 +32,27 @@ export default function OverviewScreen() {
     const budgetMap: Record<number, number> = {};
     for (const b of budgets) budgetMap[b.categoryId] = b.budgetAmount;
 
-    let income = 0;
-    let spending = 0;
+    // Accumulate per-category signed amounts
     const spentByCategory: Record<number, number> = {};
-
     for (const tx of transactions) {
       const cat = catMap[tx.categoryId];
       if (!cat) continue;
       const signed = getSignedAmount(tx.amount, tx.isIncome === 1);
-      if (signed > 0) {
-        income += signed;
-      } else {
-        spending += Math.abs(signed);
-      }
       spentByCategory[tx.categoryId] = (spentByCategory[tx.categoryId] ?? 0) + signed;
+    }
+
+    // Derive income/spending from category aggregates
+    let income = 0;
+    let spending = 0;
+    for (const [catId, rawNet] of Object.entries(spentByCategory)) {
+      const cat = catMap[Number(catId)];
+      if (!cat) continue;
+      if (cat.rule === "income") {
+        income += rawNet;           // positive = earned
+      } else {
+        const netSpent = -rawNet;   // negate: negative rawNet = money out
+        if (netSpent > 0) spending += netSpent;
+      }
     }
 
     let budgeted = 0;
@@ -116,13 +123,8 @@ export default function OverviewScreen() {
     return "#16a34a";
   }
 
-  // Find the max value across all budgeted categories for chart scaling
   const budgetedCats = spendingCategories.filter(
     (c) => c.budgetAmount !== null && c.budgetAmount > 0
-  );
-  const chartMax = budgetedCats.reduce(
-    (max, c) => Math.max(max, c.budgetAmount ?? 0, c.spent),
-    0
   );
 
   return (
@@ -173,12 +175,11 @@ export default function OverviewScreen() {
       </View>
 
       {/* Budget vs Actual Bar Chart */}
-      {budgetedCats.length > 0 && chartMax > 0 && (
+      {budgetedCats.length > 0 && (
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>Budget vs Actual</Text>
           {budgetedCats.map((cat) => {
-            const budgetWidth = ((cat.budgetAmount ?? 0) / chartMax) * 100;
-            const actualWidth = cat.spent > 0 ? (cat.spent / chartMax) * 100 : 0;
+            const actualWidth = cat.spent > 0 ? Math.min(cat.pctUsed, 100) : 0;
             const over = cat.pctUsed > 100;
             return (
               <View key={cat.id} style={styles.chartRow}>
@@ -186,31 +187,18 @@ export default function OverviewScreen() {
                   {cat.name}
                 </Text>
                 <View style={styles.chartBars}>
-                  {/* Budget bar (background reference) */}
                   <View style={styles.chartBarTrack}>
-                    <View
-                      style={[styles.budgetBar, { width: `${budgetWidth}%` }]}
-                    />
+                    {/* Budget bar = always 100% */}
+                    <View style={[styles.budgetBar, { width: "100%" }]} />
                     <View
                       style={[
                         styles.actualBar,
                         {
-                          width: `${Math.min(actualWidth, budgetWidth)}%`,
-                          backgroundColor: getBarColor(cat.pctUsed),
+                          width: `${actualWidth}%`,
+                          backgroundColor: over ? "#dc2626" : getBarColor(cat.pctUsed),
                         },
                       ]}
                     />
-                    {over && (
-                      <View
-                        style={[
-                          styles.overageBar,
-                          {
-                            left: `${budgetWidth}%`,
-                            width: `${Math.min(actualWidth - budgetWidth, 100 - budgetWidth)}%`,
-                          },
-                        ]}
-                      />
-                    )}
                   </View>
                   <Text style={[styles.chartPct, over && styles.negative]}>
                     {cat.pctUsed.toFixed(0)}%
@@ -230,7 +218,7 @@ export default function OverviewScreen() {
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: "#dc2626" }]} />
-              <Text style={styles.legendText}>Over</Text>
+              <Text style={styles.legendText}>Over Budget</Text>
             </View>
           </View>
         </View>
@@ -400,14 +388,6 @@ const styles = StyleSheet.create({
     left: 0,
     height: 20,
     borderRadius: 4,
-  },
-  overageBar: {
-    position: "absolute",
-    top: 0,
-    height: 20,
-    backgroundColor: "#dc2626",
-    borderTopRightRadius: 4,
-    borderBottomRightRadius: 4,
   },
   chartPct: {
     fontSize: 13,
