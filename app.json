@@ -25,6 +25,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "scheme": "budge-tracker",
+    "plugins": [
+      "expo-sqlite",
+      "expo-router"
+    ]
   }
 }
