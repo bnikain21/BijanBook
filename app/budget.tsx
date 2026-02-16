@@ -10,11 +10,13 @@ import {
 import { useFocusEffect } from "expo-router";
 import {
   getAllCategories,
-  getAllTransactions,
-  updateCategoryBudget,
+  getTransactionsByMonth,
+  getMonthlyBudgets,
+  setMonthlyBudget,
   Category,
 } from "../db/queries";
 import { getSignedAmount } from "../utils/signedAmount";
+import { useMonth } from "../utils/MonthContext";
 
 interface BudgetRow {
   id: number;
@@ -25,6 +27,7 @@ interface BudgetRow {
 }
 
 export default function BudgetScreen() {
+  const { month } = useMonth();
   const [rows, setRows] = useState<BudgetRow[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -32,13 +35,17 @@ export default function BudgetScreen() {
   const [totalSpent, setTotalSpent] = useState(0);
 
   const loadData = useCallback(async () => {
-    const [categories, transactions] = await Promise.all([
+    const [categories, transactions, budgets] = await Promise.all([
       getAllCategories(),
-      getAllTransactions(),
+      getTransactionsByMonth(month),
+      getMonthlyBudgets(month),
     ]);
 
     const catMap: Record<number, Category> = {};
     for (const c of categories) catMap[c.id] = c;
+
+    const budgetMap: Record<number, number> = {};
+    for (const b of budgets) budgetMap[b.categoryId] = b.budgetAmount;
 
     const actuals: Record<number, number> = {};
     for (const tx of transactions) {
@@ -54,7 +61,7 @@ export default function BudgetScreen() {
         id: c.id,
         name: c.name,
         rule: c.rule,
-        budgetAmount: c.budgetAmount,
+        budgetAmount: budgetMap[c.id] ?? null,
         actual: c.rule === "spending" ? -rawNet : rawNet,
       };
     });
@@ -71,7 +78,7 @@ export default function BudgetScreen() {
     setRows(budgetRows);
     setTotalBudget(tBudget);
     setTotalSpent(tSpent);
-  }, []);
+  }, [month]);
 
   useFocusEffect(
     useCallback(() => {
@@ -91,7 +98,7 @@ export default function BudgetScreen() {
       setEditingId(null);
       return;
     }
-    await updateCategoryBudget(id, budget);
+    await setMonthlyBudget(id, month, budget);
     setEditingId(null);
     loadData();
   }

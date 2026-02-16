@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { getOverviewData, Category } from "../db/queries";
+import { getMonthOverviewData, Category, MonthlyBudget } from "../db/queries";
 import { getSignedAmount } from "../utils/signedAmount";
+import { useMonth } from "../utils/MonthContext";
 
 interface CategoryBudgetData {
   id: number;
@@ -14,6 +15,7 @@ interface CategoryBudgetData {
 }
 
 export default function OverviewScreen() {
+  const { month } = useMonth();
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalSpending, setTotalSpending] = useState(0);
   const [totalBudgeted, setTotalBudgeted] = useState(0);
@@ -22,9 +24,13 @@ export default function OverviewScreen() {
   const [txCount, setTxCount] = useState(0);
 
   const loadOverview = useCallback(async () => {
-    const { transactions, categories } = await getOverviewData();
+    const { transactions, categories, budgets } = await getMonthOverviewData(month);
     const catMap: Record<number, Category> = {};
     for (const c of categories) catMap[c.id] = c;
+
+    // Build a budget lookup from monthly_budgets
+    const budgetMap: Record<number, number> = {};
+    for (const b of budgets) budgetMap[b.categoryId] = b.budgetAmount;
 
     let income = 0;
     let spending = 0;
@@ -48,20 +54,19 @@ export default function OverviewScreen() {
 
     for (const c of categories) {
       const rawNet = spentByCategory[c.id] ?? 0;
-      // For spending categories: negate so net outflow is positive, net profit is negative
-      // For income categories: keep as-is (positive = earned)
       const spent = c.rule === "spending" ? -rawNet : rawNet;
-      if (spent === 0 && (c.budgetAmount === null || c.budgetAmount === 0)) continue;
+      const catBudget = budgetMap[c.id] ?? null;
+      if (spent === 0 && (catBudget === null || catBudget === 0)) continue;
 
-      const hasBudget = c.budgetAmount !== null && c.budgetAmount > 0;
-      const pctUsed = hasBudget ? (spent / c.budgetAmount!) * 100 : 0;
+      const hasBudget = catBudget !== null && catBudget > 0;
+      const pctUsed = hasBudget ? (spent / catBudget!) * 100 : 0;
 
       const row: CategoryBudgetData = {
         id: c.id,
         name: c.name,
         rule: c.rule,
         spent,
-        budgetAmount: c.budgetAmount,
+        budgetAmount: catBudget,
         pctUsed,
       };
 
@@ -69,11 +74,10 @@ export default function OverviewScreen() {
         incomeCats.push(row);
       } else {
         spendingCats.push(row);
-        if (hasBudget) budgeted += c.budgetAmount!;
+        if (hasBudget) budgeted += catBudget!;
       }
     }
 
-    // Sort: over-budget first, then by % used descending, then no-budget at bottom
     spendingCats.sort((a, b) => {
       const aHasBudget = a.budgetAmount !== null && a.budgetAmount > 0;
       const bHasBudget = b.budgetAmount !== null && b.budgetAmount > 0;
@@ -94,7 +98,7 @@ export default function OverviewScreen() {
     setSpendingCategories(spendingCats);
     setIncomeCategories(incomeCats);
     setTxCount(transactions.length);
-  }, []);
+  }, [month]);
 
   useFocusEffect(
     useCallback(() => {

@@ -94,4 +94,37 @@ export async function initDatabase(): Promise<void> {
     INSERT OR IGNORE INTO categories (name, rule) VALUES ('Wages', 'income');
     INSERT OR IGNORE INTO categories (name, rule) VALUES ('Rent', 'spending');
   `);
+
+  // Create settings table
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
+
+  // Create monthly_budgets table
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS monthly_budgets (
+      categoryId INTEGER NOT NULL,
+      month TEXT NOT NULL,
+      budgetAmount REAL NOT NULL,
+      PRIMARY KEY (categoryId, month),
+      FOREIGN KEY (categoryId) REFERENCES categories(id)
+    );
+  `);
+
+  // Migrate existing categories.budgetAmount into monthly_budgets for current month
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const hasMonthlyBudgets = await database.getFirstAsync<{ cnt: number }>(
+    "SELECT COUNT(*) as cnt FROM monthly_budgets"
+  );
+  if (hasMonthlyBudgets && hasMonthlyBudgets.cnt === 0) {
+    await database.runAsync(
+      `INSERT OR IGNORE INTO monthly_budgets (categoryId, month, budgetAmount)
+       SELECT id, ?, budgetAmount FROM categories WHERE budgetAmount IS NOT NULL AND budgetAmount > 0`,
+      currentMonth
+    );
+  }
 }

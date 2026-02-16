@@ -2,28 +2,30 @@ import { useCallback, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
-  getAllTransactions,
+  getTransactionsByMonth,
   getAllCategories,
   deleteTransaction,
   Transaction,
   Category,
 } from "../db/queries";
+import { useMonth } from "../utils/MonthContext";
 
 export default function TransactionsScreen() {
   const router = useRouter();
+  const { month } = useMonth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<Record<number, Category>>({});
 
   const loadData = useCallback(async () => {
     const [txs, cats] = await Promise.all([
-      getAllTransactions(),
+      getTransactionsByMonth(month),
       getAllCategories(),
     ]);
     setTransactions(txs);
     const map: Record<number, Category> = {};
     for (const c of cats) map[c.id] = c;
     setCategoryMap(map);
-  }, []);
+  }, [month]);
 
   useFocusEffect(
     useCallback(() => {
