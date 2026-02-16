@@ -64,8 +64,7 @@ export default function OverviewScreen() {
       if (cat.rule === "income") {
         income += rawNet;           // positive = earned
       } else {
-        const netSpent = -rawNet;   // negate: negative rawNet = money out
-        if (netSpent > 0) spending += netSpent;
+        spending += -rawNet;   // negative rawNet = money out, positive rawNet = profit (reduces spending)
       }
     }
 
