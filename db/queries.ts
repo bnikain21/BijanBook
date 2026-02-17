@@ -288,6 +288,52 @@ export async function importTransactions(data: TransactionInput[]): Promise<numb
   return count;
 }
 
+// --- Category Management ---
+
+export async function insertCategory(
+  name: string,
+  rule: "income" | "spending"
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    "INSERT INTO categories (name, rule) VALUES (?, ?)",
+    name,
+    rule
+  );
+}
+
+export async function deleteCategory(id: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync("DELETE FROM monthly_budgets WHERE categoryId = ?", id);
+  await db.runAsync("DELETE FROM categories WHERE id = ?", id);
+}
+
+export async function categoryHasTransactions(
+  id: number
+): Promise<{ hasTransactions: boolean; count: number }> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ cnt: number }>(
+    "SELECT COUNT(*) as cnt FROM transactions WHERE categoryId = ?",
+    id
+  );
+  const count = row?.cnt ?? 0;
+  return { hasTransactions: count > 0, count };
+}
+
+export async function getTransactionCountsByCategory(): Promise<
+  Record<number, number>
+> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ categoryId: number; cnt: number }>(
+    "SELECT categoryId, COUNT(*) as cnt FROM transactions GROUP BY categoryId"
+  );
+  const result: Record<number, number> = {};
+  for (const row of rows) {
+    result[row.categoryId] = row.cnt;
+  }
+  return result;
+}
+
 export async function countTransactionsByMonth(month: string): Promise<number> {
   const db = await getDatabase();
   const row = await db.getFirstAsync<{ cnt: number }>(

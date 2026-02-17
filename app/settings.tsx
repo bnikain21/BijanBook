@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { File, Paths } from "expo-file-system";
 import { shareAsync } from "expo-sharing";
 import { getDocumentAsync } from "expo-document-picker";
@@ -33,6 +34,7 @@ function shiftMonth(month: string, delta: number): string {
 }
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { month, setMonth } = useMonth();
   const [busy, setBusy] = useState(false);
 
@@ -176,6 +178,14 @@ export default function SettingsScreen() {
       <Text style={styles.hint}>
         All screens show data for the selected month.
       </Text>
+
+      {/* Manage Categories */}
+      <Pressable
+        style={styles.actionBtn}
+        onPress={() => router.push("/categories")}
+      >
+        <Text style={styles.actionBtnText}>Manage Categories</Text>
+      </Pressable>
 
       {/* Export */}
       <Text style={styles.sectionTitle}>Data</Text>

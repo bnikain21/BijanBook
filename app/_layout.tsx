@@ -72,6 +72,14 @@ function TabsWithMonth() {
         }}
       />
       <Tabs.Screen
+        name="categories"
+        options={{
+          title: "Manage Categories",
+          href: null,
+          headerLeft: () => <BackButton to="/settings" />,
+        }}
+      />
+      <Tabs.Screen
         name="filters"
         options={{
           title: "Filters",
