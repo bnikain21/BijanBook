@@ -16,6 +16,7 @@ import {
   copyBudgetsFromMonth,
   TransactionInput,
 } from "../db/queries";
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -168,11 +169,11 @@ export default function SettingsScreen() {
       <Text style={styles.sectionTitle}>Selected Month</Text>
       <View style={styles.monthSelector}>
         <Pressable style={styles.arrowBtn} onPress={() => changeMonth(-1)}>
-          <Text style={styles.arrowText}>{"<"}</Text>
+          <Ionicons name="chevron-back" size={20} color="#fff" />
         </Pressable>
         <Text style={styles.monthLabel}>{formatLabel(month)}</Text>
         <Pressable style={styles.arrowBtn} onPress={() => changeMonth(1)}>
-          <Text style={styles.arrowText}>{">"}</Text>
+          <Ionicons name="chevron-forward" size={20} color="#fff" />
         </Pressable>
       </View>
       <Text style={styles.hint}>

@@ -4,6 +4,10 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { initDatabase } from "../db/database";
 import { MonthProvider, useMonth } from "../utils/MonthContext";
 import { FilterProvider } from "../utils/FilterContext";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import EvilIcons from '@expo/vector-icons/EvilIcons';
 
 function BackButton({ to }: { to: string }) {
   const router = useRouter();
@@ -12,9 +16,7 @@ function BackButton({ to }: { to: string }) {
       onPress={() => router.navigate(to)}
       style={{ marginLeft: 16, padding: 4 }}
     >
-      <Text style={{ fontSize: 16, color: "#2563eb", fontWeight: "600" }}>
-        {"< Back"}
-      </Text>
+      <Ionicons name="chevron-back" size={24} color="black" />
     </Pressable>
   );
 }
@@ -34,26 +36,42 @@ function TabsWithMonth() {
             onPress={() => router.push("/settings")}
             style={{ marginRight: 16, padding: 4 }}
           >
-            <Text style={{ fontSize: 22 }}>{"\u2699\uFE0F"}</Text>
+            <EvilIcons name="gear" size={24} color="black" />
           </Pressable>
         ),
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: `Overview - ${monthLabel}`, tabBarLabel: "Overview" }}
+        options={{
+          title: `Overview - ${monthLabel}`,
+          tabBarLabel: "Overview",
+          tabBarIcon: ({ color }) => <Ionicons name="speedometer-outline" size={24} color={ color } />
+        }}
       />
       <Tabs.Screen
         name="budget"
-        options={{ title: `Budget - ${monthLabel}`, tabBarLabel: "Budget" }}
+        options={{
+          title: `Budget - ${monthLabel}`,
+          tabBarLabel: "Budget",
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="finance" size={24} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="transactions"
-        options={{ title: `Transactions - ${monthLabel}`, tabBarLabel: "Transactions" }}
+        options={{
+          title: `Transactions - ${monthLabel}`,
+          tabBarLabel: "Transactions",
+          tabBarIcon: ({ color }) => <AntDesign name="unordered-list" size={24} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="add"
-        options={{ title: "Add", tabBarLabel: "Add" }}
+        options={{
+          title: "Add",
+          tabBarLabel: "Add",
+          tabBarIcon: ({ color }) => <AntDesign name="file-add" size={24} color={color} />,
+        }}
       />
       <Tabs.Screen
         name="edit"
