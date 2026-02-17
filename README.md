@@ -7,6 +7,7 @@ A personal budget tracking app built with React Native and Expo. Tracks income, 
 - Add transactions with date, amount, category, and account
 - Monthly budget tracking with per-category budgets that carry forward automatically
 - Overview dashboard with income/spending breakdown and budget vs actual bar charts
+- Custom categories — add and delete your own from Settings
 - Filter transactions by category or account
 - Export/import month data as JSON
 - Native calendar date picker for adding/editing transactions
