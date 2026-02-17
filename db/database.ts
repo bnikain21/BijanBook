@@ -78,23 +78,6 @@ export async function initDatabase(): Promise<void> {
       AND categoryId IN (SELECT id FROM categories WHERE rule = 'income');
   `);
 
-  // Seed default categories — use INSERT OR IGNORE so new categories get added
-  await database.execAsync(`
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Eating Out', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Groceries', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Drinking', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Uber/Uber Eats', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Hobbies', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Transportation', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Clothes', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Home', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Other', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Gambling', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Subscriptions', 'spending');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Wages', 'income');
-    INSERT OR IGNORE INTO categories (name, rule) VALUES ('Rent', 'spending');
-  `);
-
   // Create settings table
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS settings (
