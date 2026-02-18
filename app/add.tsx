@@ -14,8 +14,10 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import * as Haptics from "expo-haptics";
 import { getAllCategories, insertTransaction, Category } from "../db/queries";
 import { AutocompleteInput } from "../components/AutocompleteInput";
+import { C } from "../utils/colors";
 
 function formatDate(d: Date): string {
   const yyyy = d.getFullYear();
@@ -64,10 +66,7 @@ export default function AddScreen() {
 
   async function handleSubmit() {
     const error = validate();
-    if (error) {
-      Alert.alert("Validation Error", error);
-      return;
-    }
+    if (error) { Alert.alert("Validation Error", error); return; }
 
     await insertTransaction({
       date: formatDate(date),
@@ -79,6 +78,7 @@ export default function AddScreen() {
       notes: notes.trim(),
     });
 
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setDate(new Date());
     setDescription("");
     setAccount("");
@@ -86,21 +86,13 @@ export default function AddScreen() {
     setAmount("");
     setNotes("");
     if (categories.length > 0) setCategoryId(categories[0].id);
-
     router.navigate("/transactions");
   }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
           <Text style={styles.label}>Date</Text>
           <Pressable style={styles.input} onPress={() => setShowDatePicker(!showDatePicker)}>
             <Text style={styles.dateText}>{formatDate(date)}</Text>
@@ -120,14 +112,11 @@ export default function AddScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder="e.g. Lunch at cafe"
+            placeholderTextColor={C.textTertiary}
           />
 
           <Text style={styles.label}>Account</Text>
-          <AutocompleteInput
-            value={account}
-            onChangeText={setAccount}
-            placeholder="e.g. Apple Card, Amex Gold"
-          />
+          <AutocompleteInput value={account} onChangeText={setAccount} placeholder="e.g. Apple Card, Amex Gold" />
 
           <Text style={styles.label}>Type</Text>
           <View style={styles.toggleRow}>
@@ -135,17 +124,13 @@ export default function AddScreen() {
               style={[styles.toggleChip, !isIncome && styles.toggleChipSelected]}
               onPress={() => setIsIncome(false)}
             >
-              <Text style={[styles.toggleChipText, !isIncome && styles.toggleChipTextSelected]}>
-                Spending
-              </Text>
+              <Text style={[styles.toggleChipText, !isIncome && styles.toggleChipTextSelected]}>Spending</Text>
             </Pressable>
             <Pressable
               style={[styles.toggleChip, isIncome && styles.toggleChipSelectedIncome]}
               onPress={() => setIsIncome(true)}
             >
-              <Text style={[styles.toggleChipText, isIncome && styles.toggleChipTextSelected]}>
-                Income
-              </Text>
+              <Text style={[styles.toggleChipText, isIncome && styles.toggleChipTextSelected]}>Income</Text>
             </Pressable>
           </View>
 
@@ -155,6 +140,7 @@ export default function AddScreen() {
             value={amount}
             onChangeText={setAmount}
             placeholder="0.00"
+            placeholderTextColor={C.textTertiary}
             keyboardType="decimal-pad"
           />
 
@@ -163,18 +149,10 @@ export default function AddScreen() {
             {categories.map((cat) => (
               <Pressable
                 key={cat.id}
-                style={[
-                  styles.categoryChip,
-                  categoryId === cat.id && styles.categoryChipSelected,
-                ]}
+                style={[styles.categoryChip, categoryId === cat.id && styles.categoryChipSelected]}
                 onPress={() => handleCategorySelect(cat)}
               >
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    categoryId === cat.id && styles.categoryChipTextSelected,
-                  ]}
-                >
+                <Text style={[styles.categoryChipText, categoryId === cat.id && styles.categoryChipTextSelected]}>
                   {cat.name}
                 </Text>
               </Pressable>
@@ -187,6 +165,7 @@ export default function AddScreen() {
             value={notes}
             onChangeText={setNotes}
             placeholder="Optional notes"
+            placeholderTextColor={C.textTertiary}
             multiline
           />
 
@@ -200,18 +179,19 @@ export default function AddScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 16, paddingBottom: 120 },
-  label: { fontSize: 14, fontWeight: "600", color: "#374151", marginTop: 12, marginBottom: 4 },
+  label: { fontSize: 14, fontWeight: "600", color: C.textPrimary, marginTop: 12, marginBottom: 4 },
   input: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: C.border,
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    backgroundColor: "#f9fafb",
+    backgroundColor: C.card,
+    color: C.textPrimary,
   },
-  dateText: { fontSize: 16, color: "#111827" },
+  dateText: { fontSize: 16, color: C.textPrimary },
   notesInput: { minHeight: 60, textAlignVertical: "top" },
   toggleRow: { flexDirection: "row", gap: 8 },
   toggleChip: {
@@ -219,19 +199,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    backgroundColor: "#f9fafb",
+    borderColor: C.border,
+    backgroundColor: C.card,
     alignItems: "center",
   },
-  toggleChipSelected: {
-    backgroundColor: "#2563eb",
-    borderColor: "#2563eb",
-  },
-  toggleChipSelectedIncome: {
-    backgroundColor: "#16a34a",
-    borderColor: "#16a34a",
-  },
-  toggleChipText: { fontSize: 14, fontWeight: "600", color: "#374151" },
+  toggleChipSelected: { backgroundColor: C.accent, borderColor: C.accent },
+  toggleChipSelectedIncome: { backgroundColor: C.positive, borderColor: C.positive },
+  toggleChipText: { fontSize: 14, fontWeight: "600", color: C.textSecondary },
   toggleChipTextSelected: { color: "#fff" },
   categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   categoryChip: {
@@ -239,18 +213,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    backgroundColor: "#f9fafb",
+    borderColor: C.border,
+    backgroundColor: C.card,
   },
-  categoryChipSelected: {
-    backgroundColor: "#2563eb",
-    borderColor: "#2563eb",
-  },
-  categoryChipText: { fontSize: 14, color: "#374151" },
+  categoryChipSelected: { backgroundColor: C.accent, borderColor: C.accent },
+  categoryChipText: { fontSize: 14, color: C.textPrimary },
   categoryChipTextSelected: { color: "#fff" },
   button: {
     marginTop: 24,
-    backgroundColor: "#2563eb",
+    backgroundColor: C.accent,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",

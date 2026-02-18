@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { C } from "../utils/colors";
 
 export const ACCOUNT_SUGGESTIONS = [
   "Apple Card",
@@ -44,6 +45,7 @@ export function AutocompleteInput({
           setShowSuggestions(true);
         }}
         placeholder={placeholder}
+        placeholderTextColor={C.textTertiary}
         onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
       />
@@ -76,28 +78,26 @@ export function AutocompleteInput({
 const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: C.border,
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    backgroundColor: "#f9fafb",
+    backgroundColor: C.card,
+    color: C.textPrimary,
   },
   chipRow: {
     marginTop: 6,
     marginBottom: 2,
     maxHeight: 36,
   },
-  chipContent: {
-    gap: 6,
-  },
+  chipContent: { gap: 6 },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: C.cardElevated,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  chipText: {
-    fontSize: 13,
-    color: "#374151",
-  },
+  chipText: { fontSize: 13, color: C.textSecondary },
 });

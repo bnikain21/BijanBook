@@ -1,10 +1,20 @@
 import { getDatabase } from "./database";
 
+export interface CategoryGroup {
+  id: number;
+  name: string;
+  sortOrder: number;
+  color: string | null;
+}
+
 export interface Category {
   id: number;
   name: string;
   rule: "income" | "spending";
   budgetAmount: number | null;
+  groupId: number | null;
+  groupName: string | null;
+  groupColor: string | null;
 }
 
 export interface Transaction {
@@ -53,7 +63,12 @@ export async function getAllTransactions(): Promise<Transaction[]> {
 
 export async function getAllCategories(): Promise<Category[]> {
   const db = await getDatabase();
-  return db.getAllAsync<Category>("SELECT * FROM categories ORDER BY name ASC");
+  return db.getAllAsync<Category>(
+    `SELECT c.*, cg.name as groupName, cg.color as groupColor
+     FROM categories c
+     LEFT JOIN category_groups cg ON c.groupId = cg.id
+     ORDER BY c.name ASC`
+  );
 }
 
 export async function getOverviewData(): Promise<{
@@ -341,4 +356,67 @@ export async function countTransactionsByMonth(month: string): Promise<number> {
     `${month}%`
   );
   return row?.cnt ?? 0;
+}
+
+// --- Category Groups ---
+
+export async function getCategoryGroups(): Promise<CategoryGroup[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<CategoryGroup>(
+    "SELECT * FROM category_groups ORDER BY sortOrder ASC, id ASC"
+  );
+}
+
+export async function insertCategoryGroup(name: string): Promise<void> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ maxOrder: number | null }>(
+    "SELECT MAX(sortOrder) as maxOrder FROM category_groups"
+  );
+  const nextOrder = (row?.maxOrder ?? 0) + 1;
+  await db.runAsync(
+    "INSERT INTO category_groups (name, sortOrder) VALUES (?, ?)",
+    name,
+    nextOrder
+  );
+}
+
+export async function renameCategoryGroup(id: number, name: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync("UPDATE category_groups SET name = ? WHERE id = ?", name, id);
+}
+
+export async function updateGroupColor(id: number, color: string | null): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync("UPDATE category_groups SET color = ? WHERE id = ?", color, id);
+}
+
+export async function updateGroupSortOrders(
+  groups: Array<{ id: number; sortOrder: number }>
+): Promise<void> {
+  const db = await getDatabase();
+  for (const g of groups) {
+    await db.runAsync(
+      "UPDATE category_groups SET sortOrder = ? WHERE id = ?",
+      g.sortOrder,
+      g.id
+    );
+  }
+}
+
+export async function deleteCategoryGroup(id: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync("UPDATE categories SET groupId = NULL WHERE groupId = ?", id);
+  await db.runAsync("DELETE FROM category_groups WHERE id = ?", id);
+}
+
+export async function updateCategoryGroupId(
+  categoryId: number,
+  groupId: number | null
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    "UPDATE categories SET groupId = ? WHERE id = ?",
+    groupId,
+    categoryId
+  );
 }
