@@ -5,6 +5,7 @@ import { File, Paths } from "expo-file-system";
 import { shareAsync } from "expo-sharing";
 import { getDocumentAsync } from "expo-document-picker";
 import { useMonth } from "../utils/MonthContext";
+import { C } from "../utils/colors";
 import {
   exportMonthData,
   importTransactions,
@@ -44,11 +45,8 @@ export default function SettingsScreen() {
     setMonth(next);
     const hasBudgets = await hasMonthlyBudgets(next);
     if (!hasBudgets) {
-      // Pass a value after the target month to find any month up to and including it
       const source = await getMostRecentMonthWithBudgets(next + "~");
-      if (source) {
-        await copyBudgetsFromMonth(source, next);
-      }
+      if (source) await copyBudgetsFromMonth(source, next);
     }
   }
 
@@ -72,23 +70,17 @@ export default function SettingsScreen() {
 
   async function handleImport() {
     try {
-      const result = await getDocumentAsync({
-        type: "application/json",
-        copyToCacheDirectory: true,
-      });
+      const result = await getDocumentAsync({ type: "application/json", copyToCacheDirectory: true });
       if (result.canceled) return;
-
       setBusy(true);
       const pickedFile = new File(result.assets[0].uri);
       const content = await pickedFile.text();
       const parsed = JSON.parse(content);
-
       if (!Array.isArray(parsed.transactions)) {
         Alert.alert("Invalid File", "The JSON file must contain a 'transactions' array.");
         setBusy(false);
         return;
       }
-
       const txs: TransactionInput[] = parsed.transactions.map((t: any) => ({
         date: t.date,
         description: t.description,
@@ -98,7 +90,6 @@ export default function SettingsScreen() {
         categoryId: t.categoryId,
         notes: t.notes ?? "",
       }));
-
       Alert.alert(
         "Import Transactions",
         `Import ${txs.length} transaction${txs.length === 1 ? "" : "s"}?\n\nNote: This may create duplicates if the data was already imported.`,
@@ -131,41 +122,35 @@ export default function SettingsScreen() {
       Alert.alert("Nothing to Reset", `There are no transactions for ${formatLabel(month)}.`);
       return;
     }
-
-    Alert.alert(
-      "Reset Month",
-      `Are you sure you want to reset ${formatLabel(month)}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Continue",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Confirm Reset",
-              `This will permanently delete ${txCount} transaction${txCount === 1 ? "" : "s"} for ${formatLabel(month)}. This cannot be undone.`,
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Delete All",
-                  style: "destructive",
-                  onPress: async () => {
-                    await deleteTransactionsByMonth(month);
-                    await deleteMonthlyBudgetsByMonth(month);
-                    Alert.alert("Reset Complete", `All data for ${formatLabel(month)} has been deleted.`);
-                  },
+    Alert.alert("Reset Month", `Are you sure you want to reset ${formatLabel(month)}?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Continue",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert(
+            "Confirm Reset",
+            `This will permanently delete ${txCount} transaction${txCount === 1 ? "" : "s"} for ${formatLabel(month)}. This cannot be undone.`,
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Delete All",
+                style: "destructive",
+                onPress: async () => {
+                  await deleteTransactionsByMonth(month);
+                  await deleteMonthlyBudgetsByMonth(month);
+                  Alert.alert("Reset Complete", `All data for ${formatLabel(month)} has been deleted.`);
                 },
-              ]
-            );
-          },
+              },
+            ]
+          );
         },
-      ]
-    );
+      },
+    ]);
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Month Selector */}
       <Text style={styles.sectionTitle}>Selected Month</Text>
       <View style={styles.monthSelector}>
         <Pressable style={styles.arrowBtn} onPress={() => changeMonth(-1)}>
@@ -176,43 +161,22 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#fff" />
         </Pressable>
       </View>
-      <Text style={styles.hint}>
-        All screens show data for the selected month.
-      </Text>
+      <Text style={styles.hint}>All screens show data for the selected month.</Text>
 
-      {/* Manage Categories */}
-      <Pressable
-        style={styles.actionBtn}
-        onPress={() => router.push("/categories")}
-      >
+      <Pressable style={styles.actionBtn} onPress={() => router.push("/categories")}>
         <Text style={styles.actionBtnText}>Manage Categories</Text>
       </Pressable>
 
-      {/* Export */}
       <Text style={styles.sectionTitle}>Data</Text>
-      <Pressable
-        style={[styles.actionBtn, busy && styles.actionBtnDisabled]}
-        onPress={handleExport}
-        disabled={busy}
-      >
+      <Pressable style={[styles.actionBtn, busy && styles.actionBtnDisabled]} onPress={handleExport} disabled={busy}>
         <Text style={styles.actionBtnText}>Export {formatLabel(month)} Data</Text>
       </Pressable>
-
-      {/* Import */}
-      <Pressable
-        style={[styles.actionBtn, busy && styles.actionBtnDisabled]}
-        onPress={handleImport}
-        disabled={busy}
-      >
+      <Pressable style={[styles.actionBtn, busy && styles.actionBtnDisabled]} onPress={handleImport} disabled={busy}>
         <Text style={styles.actionBtnText}>Import Transactions</Text>
       </Pressable>
 
-      {/* Reset */}
       <Text style={[styles.sectionTitle, { marginTop: 32 }]}>Danger Zone</Text>
-      <Pressable
-        style={styles.resetBtn}
-        onPress={handleReset}
-      >
+      <Pressable style={styles.resetBtn} onPress={handleReset}>
         <Text style={styles.resetBtnText}>Reset {formatLabel(month)}</Text>
       </Pressable>
       <Text style={styles.resetHint}>
@@ -223,12 +187,12 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: C.bg },
   content: { padding: 16, paddingBottom: 40 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#374151",
+    color: C.textSecondary,
     marginBottom: 12,
     marginTop: 20,
   },
@@ -236,71 +200,51 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f0f4ff",
+    backgroundColor: C.cardElevated,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#c7d2fe",
+    borderColor: C.border,
   },
   arrowBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#2563eb",
+    backgroundColor: C.accent,
     justifyContent: "center",
     alignItems: "center",
-  },
-  arrowText: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "700",
   },
   monthLabel: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#1e3a5f",
+    color: C.textPrimary,
     marginHorizontal: 20,
     minWidth: 160,
     textAlign: "center",
   },
   hint: {
     fontSize: 13,
-    color: "#9ca3af",
+    color: C.textTertiary,
     marginTop: 8,
     textAlign: "center",
   },
   actionBtn: {
-    backgroundColor: "#2563eb",
+    backgroundColor: C.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     marginBottom: 12,
   },
-  actionBtnDisabled: {
-    opacity: 0.5,
-  },
-  actionBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  actionBtnDisabled: { opacity: 0.5 },
+  actionBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   resetBtn: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: "rgba(239,68,68,0.15)",
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#fca5a5",
+    borderColor: "rgba(239,68,68,0.4)",
   },
-  resetBtnText: {
-    color: "#dc2626",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  resetHint: {
-    fontSize: 13,
-    color: "#9ca3af",
-    marginTop: 8,
-    textAlign: "center",
-  },
+  resetBtnText: { color: C.negative, fontSize: 16, fontWeight: "700" },
+  resetHint: { fontSize: 13, color: C.textTertiary, marginTop: 8, textAlign: "center" },
 });
