@@ -97,6 +97,48 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
+  // Create category_groups table
+  try {
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS category_groups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE
+      )
+    `);
+  } catch {
+    // Already exists
+  }
+
+  // Add groupId to categories
+  try {
+    await database.execAsync(
+      "ALTER TABLE categories ADD COLUMN groupId INTEGER REFERENCES category_groups(id)"
+    );
+  } catch {
+    // Already exists
+  }
+
+  // Add sortOrder to category_groups
+  try {
+    await database.execAsync(
+      "ALTER TABLE category_groups ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0"
+    );
+    await database.execAsync(
+      "UPDATE category_groups SET sortOrder = id WHERE sortOrder = 0"
+    );
+  } catch {
+    // Already exists
+  }
+
+  // Add color to category_groups
+  try {
+    await database.execAsync(
+      "ALTER TABLE category_groups ADD COLUMN color TEXT"
+    );
+  } catch {
+    // Already exists
+  }
+
   // Migrate existing categories.budgetAmount into monthly_budgets for current month
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
