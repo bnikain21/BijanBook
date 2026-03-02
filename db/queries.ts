@@ -71,6 +71,7 @@ export async function getAllCategories(): Promise<Category[]> {
   );
 }
 
+
 export async function getOverviewData(): Promise<{
   transactions: Transaction[];
   categories: Category[];
