@@ -72,13 +72,13 @@ function buildGroupSections(rows: BudgetRow[], groups: CategoryGroup[]): GroupSe
     if (row.rule === "income") {
       groupMap["income"].rows.push(row);
       if (row.budgetAmount) groupMap["income"].budgeted += row.budgetAmount;
-      if (row.actual > 0) groupMap["income"].spent += row.actual;
+      groupMap["income"].spent += row.actual;
     } else {
       const key = row.groupId !== null ? String(row.groupId) : "unassigned";
       const bucket = groupMap[key] ?? groupMap["unassigned"];
       bucket.rows.push(row);
       if (row.budgetAmount) bucket.budgeted += row.budgetAmount;
-      if (row.actual > 0) bucket.spent += row.actual;
+      bucket.spent += row.actual;
     }
   }
 
@@ -149,7 +149,7 @@ export default function BudgetScreen() {
     let tSpent = 0;
     for (const r of budgetRows) {
       if (r.rule === "spending" && r.budgetAmount !== null && r.budgetAmount > 0) tBudget += r.budgetAmount;
-      if (r.rule === "spending" && r.actual > 0) tSpent += r.actual;
+      if (r.rule === "spending") tSpent += r.actual;
     }
 
     setRows(budgetRows);
