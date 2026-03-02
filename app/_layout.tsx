@@ -50,7 +50,7 @@ function TabsWithMonth() {
       <Tabs.Screen
         name="index"
         options={{
-          title: `Overview - ${monthLabel}`,
+          title: monthLabel,
           tabBarLabel: "Overview",
           tabBarIcon: ({ color }) => <Ionicons name="speedometer-outline" size={24} color={color} />
         }}

@@ -286,7 +286,7 @@ export default function BudgetScreen() {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Spent</Text>
-            <Text style={[styles.summaryValue, overallOver && styles.negative]}>
+            <Text style={[styles.summaryValue, totalSpent < 0 ? styles.positive : overallOver ? styles.negative : null]}>
               ${totalSpent.toFixed(2)}
             </Text>
           </View>
