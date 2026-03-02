@@ -144,10 +144,7 @@ export default function AddScreen() {
   const accentColor = isIncome ? INCOME_COLOR : C.accent;
   const amountColor = amount ? (isIncome ? INCOME_COLOR : C.textPrimary) : C.textTertiary;
 
-  // Split categories by type for the grid
-  const spendingCats = sortedCategories.filter((c) => c.rule === "spending");
-  const incomeCats = sortedCategories.filter((c) => c.rule === "income");
-  const displayCats = isIncome ? incomeCats : spendingCats;
+  const displayCats = sortedCategories;
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -265,7 +262,7 @@ export default function AddScreen() {
               <Text style={styles.fieldLabel}>Category</Text>
             </View>
             {displayCats.length === 0 ? (
-              <Text style={styles.emptyCatText}>No {isIncome ? "income" : "spending"} categories yet.</Text>
+              <Text style={styles.emptyCatText}>No categories yet.</Text>
             ) : (
               <View style={styles.categoryGrid}>
                 {displayCats.map((cat) => {

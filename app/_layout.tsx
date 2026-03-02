@@ -58,7 +58,7 @@ function TabsWithMonth() {
       <Tabs.Screen
         name="budget"
         options={{
-          title: `Budget - ${monthLabel}`,
+          title: monthLabel,
           tabBarLabel: "Budget",
           tabBarIcon: ({ color }) => <MaterialCommunityIcons name="finance" size={24} color={color} />,
           headerLeft: () => (
@@ -74,7 +74,7 @@ function TabsWithMonth() {
       <Tabs.Screen
         name="transactions"
         options={{
-          title: `Transactions - ${monthLabel}`,
+          title: monthLabel,
           tabBarLabel: "Transactions",
           tabBarIcon: ({ color }) => <AntDesign name="unordered-list" size={24} color={color} />,
         }}
@@ -82,7 +82,7 @@ function TabsWithMonth() {
       <Tabs.Screen
         name="add"
         options={{
-          title: "Add",
+          title: monthLabel,
           tabBarLabel: "Add",
           tabBarIcon: ({ color }) => <AntDesign name="file-add" size={24} color={color} />,
         }}

@@ -137,9 +137,7 @@ export default function EditScreen() {
 
   const accentColor = isIncome ? INCOME_COLOR : C.accent;
   const amountColor = amount ? (isIncome ? INCOME_COLOR : C.textPrimary) : C.textTertiary;
-  const spendingCats = categories.filter((c) => c.rule === "spending");
-  const incomeCats = categories.filter((c) => c.rule === "income");
-  const displayCats = isIncome ? incomeCats : spendingCats;
+  const displayCats = categories;
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -254,7 +252,7 @@ export default function EditScreen() {
               <Text style={styles.fieldLabel}>Category</Text>
             </View>
             {displayCats.length === 0 ? (
-              <Text style={styles.emptyCatText}>No {isIncome ? "income" : "spending"} categories yet.</Text>
+              <Text style={styles.emptyCatText}>No categories yet.</Text>
             ) : (
               <View style={styles.categoryGrid}>
                 {displayCats.map((cat) => {
