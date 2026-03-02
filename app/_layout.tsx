@@ -12,11 +12,11 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 
-function BackButton({ to }: { to: string }) {
+function BackButton({ to }: { to?: string }) {
   const router = useRouter();
   return (
     <Pressable
-      onPress={() => router.navigate(to)}
+      onPress={() => (to ? router.navigate(to) : router.back())}
       style={{ marginLeft: 16, padding: 4 }}
     >
       <Ionicons name="chevron-back" size={24} color={C.textSecondary} />
@@ -100,7 +100,7 @@ function TabsWithMonth() {
         options={{
           title: "Settings",
           href: null,
-          headerLeft: () => <BackButton to="/" />,
+          headerLeft: () => <BackButton />,
         }}
       />
       <Tabs.Screen

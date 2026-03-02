@@ -17,6 +17,7 @@ interface Props {
   onChangeText: (text: string) => void;
   placeholder?: string;
   suggestions?: string[];
+  onFocusChange?: (focused: boolean) => void;
 }
 
 export function AutocompleteInput({
@@ -24,6 +25,7 @@ export function AutocompleteInput({
   onChangeText,
   placeholder,
   suggestions = ACCOUNT_SUGGESTIONS,
+  onFocusChange,
 }: Props) {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -46,8 +48,8 @@ export function AutocompleteInput({
         }}
         placeholder={placeholder}
         placeholderTextColor={C.textTertiary}
-        onFocus={() => setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+        onFocus={() => { setShowSuggestions(true); onFocusChange?.(true); }}
+        onBlur={() => { setTimeout(() => setShowSuggestions(false), 150); onFocusChange?.(false); }}
       />
       {showSuggestions && filtered.length > 0 && (
         <ScrollView
@@ -77,13 +79,9 @@ export function AutocompleteInput({
 
 const styles = StyleSheet.create({
   input: {
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 8,
-    padding: 10,
     fontSize: 16,
-    backgroundColor: C.card,
     color: C.textPrimary,
+    padding: 0,
   },
   chipRow: {
     marginTop: 6,
